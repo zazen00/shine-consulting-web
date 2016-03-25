@@ -1,2 +1,2 @@
 # shine-consulting-web
-# meteor-kitchen generated site
+cd to web folder and run "meteor"
