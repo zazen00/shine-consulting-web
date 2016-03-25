@@ -1,0 +1,238 @@
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>
+		Shine Consulting
+	</title>
+</head>
+<template name="layout">
+	{{#if currentUser}}
+		{{> PrivateLayout}}
+	{{else}}
+		{{> PublicLayout}}
+	{{/if}}
+</template>
+
+<template name="PublicLayout">
+	<div id="content" class="sticky-wrapper">
+		<div id="navbar" class="navbar navbar-fixed-top navbar-default" role="navigation">
+			<div class="navbar-container container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+						<span class="sr-only">
+							Toggle navigation
+						</span>
+						<span class="icon-bar">
+						</span>
+						<span class="icon-bar">
+						</span>
+						<span class="icon-bar">
+						</span>
+					</button>
+					<a class="navbar-brand" href="#">
+						Shine Consulting
+					</a>
+				</div>
+				<div id="menu" class="collapse navbar-collapse">
+					{{> PublicLayoutMainMenu}}{{> PublicLayoutRightMenu}}
+				</div>
+			</div>
+		</div>
+		<div class="navbar-spacer">
+		</div>
+		{{> yield}}
+	</div>
+	<div id="footer" class="sticky-footer">
+		<div class="footer-container container">
+			<p class="text-muted">
+				Copyright &copy; Shine Consulting 2015
+			</p>
+		</div>
+	</div>
+</template>
+
+<template name="PublicLayoutMainMenu">
+	<ul id="menu-items" class="nav navbar-nav">
+		<li id="menu-item-simple" class="{{menuItemClass 'articles'}}">
+			<a href="{{pathFor 'articles'}}">
+				<span class="fa fa-book">
+				</span>
+				<span class="item-title">
+					&nbsp;Articles
+				</span>
+			</a>
+		</li>
+		<li id="menu-item-simple" class="">
+			<a href="/#section1">
+				<span class="item-title">
+					About
+				</span>
+			</a>
+		</li>
+		<li id="menu-item-simple" class="">
+			<a href="/#section2">
+				<span class="item-title">
+					Services
+				</span>
+			</a>
+		</li>
+		<li id="menu-item-simple" class="">
+			<a href="/#section3">
+				<span class="item-title">
+					Partners
+				</span>
+			</a>
+		</li>
+		<li id="menu-item-simple" class="">
+			<a href="/#contactid">
+				<span class="item-title">
+					Free Consultation
+				</span>
+			</a>
+		</li>
+	</ul>
+</template>
+
+<template name="PublicLayoutRightMenu">
+	<ul id="menu-items" class="nav navbar-nav navbar-right pull-right ">
+		<li id="menu-item-simple" class="{{menuItemClass 'login'}}">
+			<a href="{{pathFor 'login'}}">
+				<span class="item-title">
+					Admin
+				</span>
+			</a>
+		</li>
+	</ul>
+</template>
+
+<template name="PrivateLayout">
+	<div id="content" class="sticky-wrapper">
+		<div id="navbar" class="navbar navbar-fixed-top navbar-default" role="navigation">
+			<div class="navbar-container container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+						<span class="sr-only">
+							Toggle navigation
+						</span>
+						<span class="icon-bar">
+						</span>
+						<span class="icon-bar">
+						</span>
+						<span class="icon-bar">
+						</span>
+					</button>
+					<a class="navbar-brand" href="#">
+						Shine Consulting
+					</a>
+				</div>
+				<div id="menu" class="collapse navbar-collapse">
+					{{> PrivateLayoutLeftMenu}}{{> PrivateLayoutRightMenu}}
+				</div>
+			</div>
+		</div>
+		<div class="navbar-spacer">
+		</div>
+		{{> yield}}
+	</div>
+	<div id="footer" class="sticky-footer">
+		<div class="footer-container container">
+			<p class="text-muted">
+				Copyright &copy; Shine Consulting 2015
+			</p>
+		</div>
+	</div>
+</template>
+
+<template name="PrivateLayoutLeftMenu">
+	<ul id="menu-items" class="nav navbar-nav">
+		<li id="menu-item-simple" class="{{menuItemClass 'invoices'}}">
+			<a href="{{pathFor 'invoices'}}">
+				<span class="item-title">
+					Invoices
+				</span>
+			</a>
+		</li>
+		<li id="menu-item-simple" class="{{menuItemClass 'customers'}}">
+			<a href="{{pathFor 'customers'}}">
+				<span class="item-title">
+					Customers
+				</span>
+			</a>
+		</li>
+		<li id="menu-item-dropdown" class="dropdown ">
+			<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+				<span class="fa fa-book">
+				</span>
+				<span class="item-title">
+					&nbsp;Articles
+				</span>
+				<b class="caret">
+				</b>
+			</a>
+			<ul id="menu-items" class="dropdown-menu">
+				<li class="{{menuItemClass 'home_private'}}">
+					<a href="{{pathFor 'home_private'}}">
+						<span class="item-title">
+							List
+						</span>
+					</a>
+				</li>
+				<li class="{{menuItemClass 'articles'}}">
+					<a href="{{pathFor 'articles'}}">
+						<span class="item-title">
+							View
+						</span>
+					</a>
+				</li>
+				<li class="{{menuItemClass 'articlesadmin'}}">
+					<a href="{{pathFor 'articlesadmin'}}">
+						<span class="item-title">
+							Edit
+						</span>
+					</a>
+				</li>
+			</ul>
+		</li>
+	</ul>
+</template>
+
+<template name="PrivateLayoutRightMenu">
+	<ul id="menu-items" class="nav navbar-nav navbar-right">
+		<li id="menu-item-simple" class="{{menuItemClass 'admin'}}">
+			<a href="{{pathFor 'admin'}}">
+				<span class="fa fa-wrench">
+				</span>
+				<span class="item-title">
+					&nbsp;Admin
+				</span>
+			</a>
+		</li>
+		<li id="menu-item-dropdown" class="dropdown ">
+			<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+				<span class="fa fa-cog">
+				</span>
+				<span class="item-title">
+					&nbsp;{{userEmail}}
+				</span>
+				<b class="caret">
+				</b>
+			</a>
+			<ul id="menu-items" class="dropdown-menu">
+				<li class="{{menuItemClass 'user_settings'}}">
+					<a href="{{pathFor 'user_settings'}}">
+						<span class="item-title">
+							Settings
+						</span>
+					</a>
+				</li>
+				<li class="{{menuItemClass 'logout'}}">
+					<a href="{{pathFor 'logout'}}">
+						<span class="item-title">
+							Logout
+						</span>
+					</a>
+				</li>
+			</ul>
+		</li>
+	</ul>
+</template>
+

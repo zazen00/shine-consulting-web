@@ -1,0 +1,1617 @@
+{
+
+	"application": {
+
+		"title": "Shine Consulting",
+
+
+
+		"theme": "bootswatch-paper",
+
+
+
+		"footer_text": "Copyright &copy; Shine Consulting 2015",
+
+
+
+		"on_user_created_code": "Customers.insert({ name: 'Test Customer', email: 'keep@trackOf.clients', ownerId: user._id });",
+
+
+
+		"collections": [
+
+			{
+
+				"name": "customers",
+
+				"fields": [
+
+					{ "name": "name", "title": "Name", "required": true, "exportable": true },
+
+					{ "name": "phone", "title": "Phone", "default": "-", "exportable": true },
+
+					{ "name": "email", "title": "E-mail", "type": "email", "exportable": true },
+
+					{ "name": "note", "title": "Note", "input": "textarea", "exportable": true, "show_in_dataview": false },
+
+					{ "name": "totalAmount", "title": "Invoiced", "type": "float", "show_in_insert_form": false, "show_in_update_form": false, "exportable": true }
+
+				],
+
+				"owner_field": "ownerId",
+
+
+
+				"roles_allowed_to_read": ["owner"],
+
+				"roles_allowed_to_update": ["owner"],
+
+				"roles_allowed_to_delete": ["owner"]
+
+			},
+
+
+
+			{
+
+				"name": "invoices",
+
+				"fields": [
+
+					{ "name": "invoiceNumber", "title": "Invoice number", "default": "{{nextInvoiceNumber}}", "required": true, "exportable": true },
+
+					{ "name": "date", "title": "Invoice date", "type": "date", "format": "MM-DD-YYYY", "input": "datepicker", "default": "today", "required": true, "exportable": true },
+
+
+
+					{
+
+						"name": "customerId",
+
+						"title": "Customer",
+
+						"required": true,
+
+						"input": "select",
+
+						"lookup_query_name": "customer_list",
+
+						"lookup_field": "name",
+
+						"lookup_key": "_id",
+
+						"show_in_dataview": false,
+
+						"show_in_read_only_form": false,
+
+						"exportable": false,
+
+
+
+						"join_collection": "customers",
+
+						"join_fields": ["name"],
+
+						"join_container": "customer"
+
+					},
+
+
+
+					{
+
+						"name": "customer.name",
+
+						"title": "Customer",
+
+						"show_in_insert_form": false,
+
+						"show_in_update_form": false,
+
+						"exportable": true
+
+					},
+
+
+
+					{
+
+						"name": "totalAmount",
+
+						"title": "Total",
+
+						"type": "float",
+
+						"show_in_insert_form": false,
+
+						"show_in_update_form": false,
+
+						"exportable": true
+
+					}
+
+				],
+
+
+
+				"owner_field": "ownerId",
+
+				"roles_allowed_to_read": ["owner"],
+
+				"roles_allowed_to_update": ["owner"],
+
+				"roles_allowed_to_delete": ["owner"],
+
+
+
+				"before_insert_code": "if(!doc.totalAmount) doc.totalAmount = 0;"
+
+			},
+
+
+
+			{
+
+				"name": "invoice_items",
+
+				"fields": [
+
+					{ "name": "description", "title": "Description", "required": true, "exportable": true },
+
+					{ "name": "quantity", "title": "Quantity", "type": "float", "default": 1, "required": true, "exportable": true },
+
+					{ "name": "price", "title": "Price", "type": "float", "default": 0, "required": true, "exportable": true },
+
+					{ "name": "amount", "title": "Amount", "type": "float", "show_in_insert_form": false, "show_in_update_form": false, "exportable": true }
+
+				],
+
+				"owner_field": "ownerId",
+
+
+
+				"roles_allowed_to_read": ["owner"],
+
+				"roles_allowed_to_update": ["owner"],
+
+				"roles_allowed_to_delete": ["owner"],
+
+
+
+				"before_insert_code": "doc.amount = doc.quantity * doc.price;",
+
+
+
+				"before_update_code": "if(!modifier.$set) return; var quantity = modifier.$set.quantity || doc.quantity; var price = modifier.$set.price || doc.price; modifier.$set.amount = quantity * price;",
+
+
+
+				"after_insert_code": "var sum = 0; InvoiceItems.find({ invoiceId: doc.invoiceId }).map(function(item) { sum += item.amount; }); Invoices.update({ _id: doc.invoiceId }, { $set: { totalAmount: sum }});",
+
+
+
+				"after_update_code": "var sum = 0; InvoiceItems.find({ invoiceId: doc.invoiceId }).map(function(item) { sum += item.amount; }); Invoices.update({ _id: doc.invoiceId }, { $set: { totalAmount: sum }});",
+
+
+
+				"after_remove_code": "var sum = 0; InvoiceItems.find({ invoiceId: doc.invoiceId }).map(function(item) { sum += item.amount; }); Invoices.update({ _id: doc.invoiceId }, { $set: { totalAmount: sum }});"
+
+			}
+
+		],
+
+
+
+		"queries": [
+
+			{
+
+				"name": "admin_users",
+
+				"collection": "users",
+
+				"filter": {}
+
+			},
+
+			{
+
+				"name": "admin_user",
+
+				"collection": "users",
+
+				"filter": { "_id": ":userId" },
+
+				"find_one": true
+
+			},
+
+			{
+
+				"name": "users_null",
+
+				"collection": "users",
+
+				"filter": { "_id": null },
+
+				"find_one": true
+
+			},
+
+			{
+
+				"name": "customer_list",
+
+				"collection": "customers",
+
+				"filter": {},
+
+				"options": {
+
+					"transform": "function(doc) { var sum = 0; Invoices.find({ customerId: doc._id }).map(function(item) { if(item.totalAmount) sum += item.totalAmount; }); doc.totalAmount = sum; return doc; }",
+
+					"sort": ["name"]
+
+				},
+
+				"related_queries": [
+
+					{ "name": "invoice_list" }
+
+				]
+
+			},
+
+			{
+
+				"name": "customers_empty",
+
+				"collection": "customers",
+
+				"filter": {"_id": null},
+
+				"find_one": true
+
+			},
+
+			{
+
+				"name": "customer_details",
+
+				"collection": "customers",
+
+				"find_one": true,
+
+				"filter": { "_id": ":customerId" },
+
+				"options": {
+
+					"transform": "function(doc) { var sum = 0; Invoices.find({ customerId: doc._id }).map(function(item) { sum += item.totalAmount; }); doc.totalAmount = sum; return doc; }"
+
+				},
+
+				"related_queries": [
+
+					{ "name": "invoice_list" }
+
+				]
+
+			},
+
+			{
+
+				"name": "invoice_list",
+
+				"collection": "invoices",
+
+				"filter": {},
+
+				"options": {
+
+					"sort": [[ "invoiceNumber", "desc"]]
+
+				}
+
+			},
+
+			{
+
+				"name": "invoices_empty",
+
+				"collection": "invoices",
+
+				"filter": { "_id": null },
+
+				"options": {},
+
+				"find_one": true,
+
+				"related_queries": [
+
+					{ "name": "invoice_list" }
+
+				]
+
+			},
+
+			{
+
+				"name": "invoice_details",
+
+				"collection": "invoices",
+
+				"filter": { "_id": ":invoiceId" },
+
+				"find_one": true
+
+			},
+
+			{
+
+				"name": "invoice_items",
+
+				"collection": "invoice_items",
+
+				"filter": { "invoiceId": ":invoiceId" }
+
+			},
+
+			{
+
+				"name": "invoice_items_empty",
+
+				"collection": "invoice_items",
+
+				"filter": { "_id": null },
+
+				"find_one": true
+
+			},
+
+			{
+
+				"name": "invoice_item",
+
+				"collection": "invoice_items",
+
+				"filter": { "_id": ":itemId" },
+
+				"find_one": true
+
+			},
+
+			{
+
+				"name": "current_user_data",
+
+				"collection": "users",
+
+				"filter": { "_id": "Meteor.userId()" },
+
+				"find_one": true
+
+			}
+
+		],
+
+
+
+		"public_zone": {
+
+
+
+			"pages": [
+
+
+
+				{
+
+					"name": "home",
+
+					"components": [
+
+
+
+						{
+
+							"name": "jumbotron",
+
+							"type": "jumbotron",
+
+							"dest_position": "before",
+
+
+
+							"image_url": "/images/jumbotron-bg.png",
+
+
+
+							"components": [
+
+								{
+
+									"name": "jumbotron_content",
+
+
+
+
+
+									"type": "custom_component",
+
+									"custom_template": "files/jumbotron_content.html"
+
+								}
+
+							]
+
+						},
+
+
+
+						{
+
+							"name": "section1",
+
+							"type": "jumbotron",
+
+							"dest_position": "before",
+
+
+
+							"class": "bg-blue",
+
+							"components": [
+
+
+
+								{
+
+									"name": "content1",
+
+									"type": "markdown",
+
+									"source_file": "files/section1.md"
+
+								}
+
+							]
+
+						},
+
+
+
+						{
+
+							"name": "section2",
+
+							"type": "jumbotron",
+
+							"dest_position": "before",
+
+							"image_url": "/images/jumbotron-bg-orange.png",
+
+							"components": [
+
+								{
+
+									"name": "content2",
+
+									"type": "markdown",
+
+									"source_file": "files/section2.md"
+
+								}
+
+							]
+
+						},
+
+
+
+						{
+
+							"name": "section3",
+
+							"type": "jumbotron",
+
+							"dest_position": "before",
+
+							"components": [
+
+								{
+
+									"name": "content3",
+
+									"type": "markdown",
+
+									"source_file": "files/section3.md"
+
+								}
+
+							]
+
+						},
+
+
+
+						{
+
+							"name": "section_contact",
+
+							"type": "jumbotron",
+
+							"dest_position": "before",
+
+							"image_url": "/images/jumbotron-bg.png",
+
+							"class":"front-page",
+
+							"components": [
+
+								{
+
+									"name": "content_contact",
+
+									"type": "markdown",
+
+									"source_file": "files/section_contact.md"
+
+								},
+
+								{
+
+									"name": "contact",
+
+									"type": "form",
+
+									"mode": "insert",
+
+									"fields": [
+
+										{ "name": "name", "title": "Your name", "required": true },
+
+										{ "name": "business", "title": "Your business name", "required": false },
+
+										{ "name": "phone", "title": "Your phone number", "required": false },
+
+										{ "name": "email", "title": "Your e-mail", "type": "email", "required": true },
+
+										{ "name": "refferal", "title": "How did you find us?", "input": "textarea", "required": false },
+
+										{ "name": "about", "title": "Tell us about yourself!", "input": "textarea", "required": false }
+
+									],
+
+									"submit_button_title": "Send",
+
+									"submit_code": "Meteor.call('sendMail', { from: values.email, to: 'csmith@shineconsulting.biz', subject: 'Message from ' + values.name, text: values.about }, function(e) {  if(e) errorAction(e.message); else submitAction('Your message is sent. Thank you for contacting us! :)'); } );"
+								}
+
+							]
+
+						}
+
+					],
+
+
+
+					"template_rendered_code": "$('section, .jumbotron').css('min-height', $(window).height() + 'px'); window.scrollTo(0, 0); window.sr = new scrollReveal();"
+
+				},
+
+				{ "name": "login", "template": "login" },
+
+				{ "name": "register", "template": "register" },
+
+				{ "name": "forgot_password", "template": "forgot_password" },
+
+				{ "name": "reset_password", "template": "reset_password", "route_params": ["resetPasswordToken"] }
+
+
+
+			],
+
+
+
+
+
+			"components": [
+
+				{
+
+					"name": "main_menu",
+
+					"type": "menu",
+
+					"class": "nav navbar-nav",
+
+					"scroll_spy_selector": "body",
+
+					"items": [
+
+						{ "title": "Articles", "route": "articles", "icon_class": "fa fa-book" },
+
+            { "title": "About", "url": "#section1" },
+
+            { "title": "Services", "url": "#section2" },
+
+            { "title": "Partners", "url": "#section3"},
+
+            { "title": "Free Consultation", "url": "#contactid"}
+
+					]
+
+				},
+
+				{
+
+					"name": "right_menu",
+
+					"type": "menu",
+
+					"class": "nav navbar-nav navbar-right pull-right ",
+
+					"dest_selector": "#menu",
+
+					"items": [
+
+							{ "title": "Admin", "route": "login" }
+
+					]
+
+				}
+
+			]
+
+
+
+		},
+
+
+
+		"private_zone": {
+
+			"pages": [
+
+				{
+
+					"name": "home_private",
+
+					"title": "Articles List",
+
+					"text": "{{> blogLatest}}"
+
+				},
+
+				{
+
+					"name": "admin",
+
+					"roles": ["admin"],
+
+					"pages": [
+
+						{
+
+							"name": "users",
+
+							"components": [
+
+								{
+
+									"name": "view",
+
+									"type": "data_view",
+
+									"title": "Users",
+
+									"text_if_empty": "No users yet",
+
+									"query_name": "admin_users",
+
+									"query_params": [],
+
+
+
+									"fields": [
+
+										{ "name": "profile.name", "title": "Name"},
+
+										{ "name": "profile.email", "title": "E-mail" },
+
+										{ "name": "roles", "title": "Role" }
+
+									],
+
+
+
+									"insert_route": "admin.users.insert",
+
+
+
+									"edit_route": "admin.users.edit",
+
+									"edit_route_params": [
+
+										{ "name": "userId", "value": "this._id" }
+
+									],
+
+
+
+									"details_route": "admin.users.details",
+
+									"details_route_params": [
+
+										{ "name": "userId", "value": "this._id" }
+
+									]
+
+								}
+
+							],
+
+							"pages": [
+
+								{
+
+									"name": "details",
+
+									"route_params": ["userId"],
+
+									"components": [
+
+										{
+
+											"name": "details_form",
+
+											"type": "form",
+
+											"mode": "read_only",
+
+											"title": "User details",
+
+											"query_name": "admin_user",
+
+											"query_params": [],
+
+											"fields": [
+
+												{ "name": "profile.name", "title": "Name"},
+
+												{ "name": "profile.email", "title": "E-mail", "type": "email" },
+
+												{ "name": "roles", "title": "Role" }
+
+											],
+
+											"close_route": "admin.users",
+
+											"back_route": "admin.users"
+
+										}
+
+									]
+
+								},
+
+								{
+
+									"name": "insert",
+
+									"components": [
+
+										{
+
+											"name": "insert_form",
+
+											"type": "form",
+
+											"mode": "insert",
+
+											"title": "Add new user",
+
+											"submit_route": "admin.users",
+
+											"cancel_route": "admin.users",
+
+											"query_name": "users_null",
+
+											"query_params": [],
+
+											"fields": [
+
+												{ "name": "profile.name", "title": "Name", "required": true },
+
+												{ "name": "profile.email", "title": "E-mail", "type": "email", "required": true },
+
+												{ "name": "password", "title": "Password", "input": "password", "required": true }
+
+											]
+
+										}
+
+									]
+
+								},
+
+								{
+
+									"name": "edit",
+
+									"route_params": ["userId"],
+
+									"components": [
+
+										{
+
+											"name": "edit_form",
+
+											"type": "form",
+
+											"mode": "update",
+
+											"title": "Edit user",
+
+											"submit_route": "admin.users",
+
+											"cancel_route": "admin.users",
+
+											"query_name": "admin_user",
+
+											"query_params": [],
+
+											"fields": [
+
+												{ "name": "profile.name", "title": "Name", "required": true },
+
+												{ "name": "profile.email", "title": "E-mail", "type": "email", "required": true },
+
+												{
+
+													"name": "roles",
+
+													"type": "array",
+
+													"title": "Role",
+
+													"input": "radio",
+
+													"input_items": [
+
+														{ "value": "user", "title": "User" },
+
+														{ "value": "admin", "title": "Admin" },
+
+														{ "value": "blocked", "title": "Blocked" }
+
+													]
+
+												}
+
+											]
+
+										}
+
+									]
+
+								}
+
+							]
+
+						}
+
+
+
+					],
+
+
+
+					"components": [
+
+						{
+
+							"name": "side_menu",
+
+							"type": "menu",
+
+							"class": "nav nav-stacked nav-pills",
+
+							"items": [
+
+								{ "title": "Users", "route": "admin.users" }
+
+							]
+
+						}
+
+					]
+
+				},
+
+				{
+
+					"name": "customers",
+
+					"components": [
+
+						{
+
+							"name": "view",
+
+							"type": "data_view",
+
+							"title": "Customers",
+
+							"text_if_empty": "No customers :(",
+
+							"query_name": "customer_list",
+
+							"insert_route": "customers.insert",
+
+							"edit_route": "customers.edit",
+
+							"edit_route_params": [
+
+								{ "name": "customerId", "value": "this._id" }
+
+							],
+
+							"details_route": "customers.details",
+
+							"details_route_params": [
+
+								{ "name": "customerId", "value": "this._id" }
+
+							]
+
+						}
+
+					],
+
+
+
+					"pages": [
+
+						{
+
+							"name": "insert",
+
+							"components": [
+
+								{
+
+									"name": "insert_form",
+
+									"type": "form",
+
+									"mode": "insert",
+
+									"title": "New customer",
+
+									"query_name": "customers_empty",
+
+									"submit_route": "customers",
+
+									"cancel_route": "customers"
+
+								}
+
+							]
+
+						},
+
+						{
+
+							"name": "details",
+
+							"route_params": ["customerId"],
+
+							"components": [
+
+								{
+
+									"name": "details_form",
+
+									"type": "form",
+
+									"mode": "read_only",
+
+									"title": "Details",
+
+									"query_name": "customer_details",
+
+									"close_route": "customers",
+
+									"back_route": "customers"
+
+								}
+
+							]
+
+						},
+
+
+
+						{
+
+							"name": "edit",
+
+							"route_params": ["customerId"],
+
+							"components": [
+
+								{
+
+									"name": "edit_form",
+
+									"type": "form",
+
+									"mode": "update",
+
+									"title": "Edit customer",
+
+									"submit_route": "customers",
+
+									"cancel_route": "customers",
+
+									"query_name": "customer_details"
+
+								}
+
+							]
+
+						}
+
+					]
+
+				},
+
+
+
+				{
+
+					"name": "invoices",
+
+					"components": [
+
+						{
+
+							"name": "view",
+
+							"type": "data_view",
+
+							"title": "Invoices",
+
+							"text_if_empty": "No invoices :(",
+
+							"query_name": "invoice_list",
+
+							"insert_route": "invoices.insert",
+
+							"edit_route": "invoices.edit",
+
+							"edit_route_params": [
+
+								{ "name": "invoiceId", "value": "this._id" }
+
+							],
+
+							"details_route": "invoices.details",
+
+							"details_route_params": [
+
+								{ "name": "invoiceId", "value": "this._id" }
+
+							]
+
+						}
+
+					],
+
+
+
+					"pages": [
+
+						{
+
+							"name": "insert",
+
+							"components": [
+
+								{
+
+									"name": "insert_form",
+
+									"type": "form",
+
+									"mode": "insert",
+
+									"title": "New invoice",
+
+
+
+									"query_name": "invoices_empty",
+
+
+
+									"helpers_code": "'nextInvoiceNumber': function() { var max = 0; var invoiceNumbers = Invoices.find({}, { fields: { invoiceNumber: 1 }}).fetch(); _.each(invoiceNumbers, function(doc) { var intNum = parseInt(doc.invoiceNumber); if(!isNaN(intNum) && intNum > max) max = intNum; }); return max + 1; }",
+
+
+
+									"submit_route": "invoices.details",
+
+									"submit_route_params": [
+
+										{ "name": "invoiceId", "value": "newId"}
+
+									],
+
+									"cancel_route": "invoices"
+
+								}
+
+							]
+
+						},
+
+						{
+
+							"name": "details",
+
+							"template": "page_subcontent_tabnav",
+
+							"route_params": ["invoiceId"],
+
+							"components": [
+
+								{
+
+									"name": "details_form",
+
+									"type": "form",
+
+									"mode": "read_only",
+
+									"title": "Invoice #{{invoice_details.invoiceNumber}}",
+
+									"layout": "horizontal",
+
+									"query_name": "invoice_details",
+
+									"back_route": "invoices"
+
+								}
+
+
+
+							],
+
+
+
+							"force_yield_subpages": true,
+
+							"pages": [
+
+								{
+
+									"name": "items",
+
+									"components": [
+
+										{
+
+											"name": "view",
+
+											"type": "data_view",
+
+											"text_if_empty": "No items",
+
+											"query_name": "invoice_items",
+
+											"insert_button_title": "Add item",
+
+											"insert_route": "invoices.details.insert",
+
+											"insert_route_params": [
+
+												{ "name": "invoiceId", "value": "this.params.invoiceId" }
+
+											],
+
+											"edit_route": "invoices.details.edit",
+
+											"edit_route_params": [
+
+												{ "name": "invoiceId", "value": "UI._parentData(1).params.invoiceId" },
+
+												{ "name": "itemId", "value": "this._id" }
+
+											]
+
+										}
+
+									]
+
+								},
+
+
+
+								{
+
+									"name": "insert",
+
+									"components": [
+
+										{
+
+											"name": "insert_form",
+
+											"type": "form",
+
+											"mode": "insert",
+
+											"title": "Add item",
+
+											"query_name": "invoice_items_empty",
+
+
+
+											"hidden_fields": [
+
+												{ "name": "invoiceId", "value": "this.params.invoiceId" }
+
+											],
+
+
+
+											"submit_route": "invoices.details",
+
+											"submit_route_params": [
+
+												{ "name": "invoiceId", "value": "this.params.invoiceId"}
+
+											],
+
+											"cancel_route": "invoices.details",
+
+											"cancel_route_params": [
+
+												{ "name": "invoiceId", "value": "this.params.invoiceId"}
+
+											]
+
+										}
+
+									]
+
+								},
+
+
+
+								{
+
+									"name": "edit",
+
+									"route_params": ["itemId"],
+
+									"components": [
+
+										{
+
+											"name": "edit_form",
+
+											"type": "form",
+
+											"mode": "update",
+
+											"title": "Edit item",
+
+											"query_name": "invoice_item",
+
+											"submit_route": "invoices.details",
+
+											"submit_route_params": [
+
+												{ "name": "invoiceId", "value": "this.params.invoiceId"}
+
+											],
+
+											"cancel_route": "invoices.details",
+
+											"cancel_route_params": [
+
+												{ "name": "invoiceId", "value": "this.params.invoiceId"}
+
+											]
+
+										}
+
+									]
+
+								}
+
+							]
+
+						},
+
+
+
+						{
+
+							"name": "edit",
+
+							"route_params": ["invoiceId"],
+
+							"components": [
+
+								{
+
+									"name": "edit_form",
+
+									"type": "form",
+
+									"mode": "update",
+
+									"title": "Edit invoice",
+
+									"submit_route": "invoices",
+
+									"cancel_route": "invoices",
+
+									"query_name": "invoice_details"
+
+								}
+
+							]
+
+						}
+
+					]
+
+				},
+
+
+
+				{
+
+					"name": "user_settings",
+
+					"pages": [
+
+						{
+
+							"name": "profile",
+
+							"components": [
+
+								{
+
+									"name": "edit_form",
+
+									"type": "form",
+
+									"mode": "update",
+
+									"title": "Edit your profile",
+
+									"submit_route": "user_settings.profile",
+
+									"query_name": "current_user_data",
+
+									"fields": [
+
+										{ "name": "profile.name", "title": "Name", "required": true },
+
+										{ "name": "profile.email", "title": "E-mail", "type": "email", "required": true },
+
+										{ "name": "profile.facebook", "title": "Facebook URL" },
+
+										{ "name": "profile.google", "title": "Google+ URL" },
+
+										{ "name": "profile.twitter", "title": "Twitter ID" },
+
+										{ "name": "profile.website", "title": "Website URL" }
+
+									]
+
+								}
+
+							]
+
+						},
+
+
+
+						{ "name": "change_pass", "template": "change_pass" }
+
+					],
+
+
+
+					"components": [
+
+						{
+
+							"name": "side_menu",
+
+							"type": "menu",
+
+							"class": "nav nav-stacked nav-pills",
+
+							"items": [
+
+								{ "title": "Profile", "route": "user_settings.profile" },
+
+								{ "title": "Change password", "route": "user_settings.change_pass" }
+
+							]
+
+						}
+
+					]
+
+				},
+
+
+
+				{ "name": "logout", "template": "logout" }
+
+			],
+
+
+
+			"components": [
+
+				{
+
+					"name": "left_menu",
+
+					"type": "menu",
+
+					"class": "nav navbar-nav",
+
+					"dest_selector": "#menu",
+
+					"items": [
+
+
+
+						{ "title": "Invoices", "route": "invoices" },
+
+						{ "title": "Customers", "route": "customers" },
+
+						{
+
+							"title": "Articles",
+
+							"items": [
+
+								{ "title": "List", "route": "home_private" },
+
+								{ "title": "View", "route": "articles" },
+
+								{ "title": "Edit", "route": "articlesadmin" }
+
+							],
+
+							"icon_class": "fa fa-book"
+
+						}
+
+					]
+
+				},
+
+				{
+
+					"name": "right_menu",
+
+					"type": "menu",
+
+					"class": "nav navbar-nav navbar-right",
+
+					"dest_selector": "#menu",
+
+					"items": [
+
+						{ "title": "Admin", "route": "admin", "icon_class": "fa fa-wrench" },
+
+
+
+						{
+
+							"title": "{{userEmail}}",
+
+							"items": [
+
+								{ "title": "Settings", "route": "user_settings" },
+
+								{ "title": "Logout", "route": "logout" }
+
+							],
+
+							"icon_class": "fa fa-cog"
+
+						}
+
+					]
+
+				}
+
+			]
+
+		},
+
+		"packages": {
+
+			"meteor": [
+
+				"buildateam:scrollreveal",
+
+				"ryw:blog",
+
+				"ian:accounts-ui-bootstrap-3",
+
+				"pcel:loading",
+
+        			"yogiben:mixpanel"
+
+			]
+
+		},
+
+		"server_side_routes": [
+
+			{
+
+				"name": "articles",
+
+				"path": "articles"
+
+			},
+
+			{
+
+				"name":"articlesadmin",
+
+				"path":"articlesAdmin"
+
+			}
+
+
+
+		],
+
+		"copy_files": [
+
+			{ "source": "files/styles.css", "dest": "CLIENT_STYLES_DIR/styles.css" },
+
+			{ "source": "files/jumbotron-bg.png", "dest": "PUBLIC_IMAGES_DIR/jumbotron-bg.png" },
+
+			{ "source": "files/jumbotron-bg-green.png", "dest": "PUBLIC_IMAGES_DIR/jumbotron-bg-green.png" },
+
+			{ "source": "files/logo.png", "dest": "PUBLIC_IMAGES_DIR/logo.png" },
+
+			{ "source": "files/jumbotron-bg-yellow.png", "dest": "PUBLIC_IMAGES_DIR/jumbotron-bg-yellow.png" },
+
+			{ "source": "files/jumbotron-bg-orange.png", "dest": "PUBLIC_IMAGES_DIR/jumbotron-bg-orange.png" },
+
+			{ "source": "files/articles.js", "dest": "BOTH_LIB_DIR/articles.js" },
+
+			{ "source": "files/articles.html", "dest": "BOTH_LIB_DIR/articles.html" },
+
+			{ "source": "files/serverzaz.js", "dest": "SERVER_DIR/serverzaz.js" }
+
+
+
+		]
+
+	},
+	"server_startup_code": "process.env.MAIL_URL = 'smtp://postmaster%40shineconsulting.biz:d6e6246f0f1c9c65917c6318668965ff@smtp.mailgun.org:587/';",
+
+	"client_startup_code": "Meteor.settings.env.MAIL_URL = 'smtp://postmaster%40shineconsulting.biz:d6e6246f0f1c9c65917c6318668965ff@smtp.mailgun.org:587/';",
+		"server_startup_source_file": "files/serverzaz.js"
+
+
+}
